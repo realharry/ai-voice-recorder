@@ -8,7 +8,8 @@ export async function startRecording(): Promise<void> {
       } else if (response?.success) {
         resolve()
       } else {
-        reject(new Error('Failed to start recording'))
+        const errorMessage = response?.error || 'Failed to start recording'
+        reject(new Error(errorMessage))
       }
     })
   })

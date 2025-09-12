@@ -16,7 +16,8 @@ function AudioRecorder({ isRecording, onRecordingChange }: AudioRecorderProps) {
       onRecordingChange(true)
     } catch (error) {
       console.error('Failed to start recording:', error)
-      alert('Failed to start recording. Please ensure microphone permissions are granted.')
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      alert(`Failed to start recording: ${errorMessage}`)
     } finally {
       setIsProcessing(false)
     }

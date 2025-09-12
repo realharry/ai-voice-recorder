@@ -30,7 +30,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
 async function startOffscreenRecording() {
   try {
-    // Get user media
+    // Check if microphone is available
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('getUserMedia is not supported in this browser');
+    }
+
+    // Get user media with proper error handling
     const stream = await navigator.mediaDevices.getUserMedia({ 
       audio: {
         echoCancellation: true,
@@ -62,7 +67,23 @@ async function startOffscreenRecording() {
   } catch (error) {
     console.error('Error starting recording in offscreen:', error);
     offscreenRecording = false;
-    throw error;
+    
+    // Provide more specific error messages
+    if (error instanceof DOMException) {
+      if (error.name === 'NotAllowedError') {
+        throw new Error('Microphone access denied. Please allow microphone access in your browser settings and reload the extension.');
+      } else if (error.name === 'NotFoundError') {
+        throw new Error('No microphone found. Please ensure a microphone is connected to your device.');
+      } else if (error.name === 'NotReadableError') {
+        throw new Error('Microphone is already in use by another application. Please close other applications using the microphone and try again.');
+      } else {
+        throw new Error(`Microphone access failed: ${error.message}`);
+      }
+    } else if (error instanceof Error) {
+      throw new Error(`Microphone access failed: ${error.message}`);
+    } else {
+      throw new Error('Unknown error occurred while accessing microphone');
+    }
   }
 }
 

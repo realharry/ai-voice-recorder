@@ -7,7 +7,8 @@
     "storage",
     "activeTab",
     "offscreen",
-    "downloads"
+    "downloads",
+    "microphone"
   ],
   "background": {
     "service_worker": "background.js"
