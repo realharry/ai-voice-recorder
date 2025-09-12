@@ -10,11 +10,16 @@
     "verify": "node scripts/verify-build.js",
     "preview": "vite preview"
   },
-  "keywords": ["chrome-extension", "audio-recorder", "react", "typescript"],
+  "keywords": [
+    "chrome-extension",
+    "audio-recorder",
+    "react",
+    "typescript"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/chrome": "^0.1.9",
+    "@types/chrome": "^0.1.11",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.2",
