@@ -4,20 +4,31 @@ import { startRecording, stopRecording, downloadRecording } from '../utils/chrom
 interface AudioRecorderProps {
   isRecording: boolean
   onRecordingChange: (recording: boolean) => void
+  onPermissionNeeded?: () => void
 }
 
-function AudioRecorder({ isRecording, onRecordingChange }: AudioRecorderProps) {
+function AudioRecorder({ isRecording, onRecordingChange, onPermissionNeeded }: AudioRecorderProps) {
   const [isProcessing, setIsProcessing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleStartRecording = async () => {
     setIsProcessing(true)
+    setError(null)
+    
     try {
       await startRecording()
       onRecordingChange(true)
     } catch (error) {
       console.error('Failed to start recording:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-      alert(`Failed to start recording: ${errorMessage}`)
+      setError(errorMessage)
+      
+      // Show permission notice for permission-related errors
+      if (errorMessage.toLowerCase().includes('permission') || 
+          errorMessage.toLowerCase().includes('denied') ||
+          errorMessage.toLowerCase().includes('allow')) {
+        onPermissionNeeded?.()
+      }
     } finally {
       setIsProcessing(false)
     }
@@ -57,6 +68,16 @@ function AudioRecorder({ isRecording, onRecordingChange }: AudioRecorderProps) {
           </div>
         )}
       </div>
+
+      {error && (
+        <div className="error-message">
+          <h4>⚠️ Recording Error</h4>
+          <p>{error}</p>
+          <button onClick={() => setError(null)} className="btn btn-small">
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div className="controls">
         {!isRecording ? (
@@ -101,6 +122,7 @@ function AudioRecorder({ isRecording, onRecordingChange }: AudioRecorderProps) {
       <div className="info">
         <p>💡 Recording continues even when this popup is closed</p>
         <p>🔴 Red badge indicates active recording</p>
+        <p>🎤 First use requires microphone permission</p>
       </div>
     </div>
   )

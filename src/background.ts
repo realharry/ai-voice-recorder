@@ -34,33 +34,57 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
 async function startBackgroundRecording() {
   try {
+    console.log('Starting background recording process...');
+    
     // Check if offscreen document already exists
     let hasDocument = false;
     try {
       hasDocument = await chrome.offscreen.hasDocument();
     } catch {
       // Method might not be available in older versions
+      hasDocument = false;
     }
 
     if (!hasDocument) {
+      console.log('Creating offscreen document...');
       // Create offscreen document for audio capture
       await chrome.offscreen.createDocument({
         url: 'offscreen.html',
         reasons: [chrome.offscreen.Reason.USER_MEDIA],
-        justification: 'Recording audio from microphone'
+        justification: 'Recording audio from microphone for voice recording functionality'
       });
+      
+      // Give the offscreen document time to load
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
 
+    console.log('Sending message to offscreen document to start recording...');
+    
     // Send message to offscreen document to start recording
-    const response = await chrome.runtime.sendMessage({
-      action: 'START_OFFSCREEN_RECORDING'
+    const response = await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Timeout waiting for offscreen document response'));
+      }, 10000); // 10 second timeout
+      
+      chrome.runtime.sendMessage({
+        action: 'START_OFFSCREEN_RECORDING'
+      }, (response) => {
+        clearTimeout(timeout);
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+        } else {
+          resolve(response);
+        }
+      });
     });
 
-    if (response && response.success) {
+    if (response && (response as any).success) {
       recordingState.isRecording = true;
       updateBadge();
+      console.log('Background recording started successfully');
     } else {
-      throw new Error('Failed to start recording in offscreen document');
+      const error = response && (response as any).error ? (response as any).error : 'Failed to start recording in offscreen document';
+      throw new Error(error);
     }
 
   } catch (error) {
@@ -74,24 +98,44 @@ async function startBackgroundRecording() {
 async function stopBackgroundRecording() {
   if (recordingState.isRecording) {
     try {
+      console.log('Stopping background recording...');
+      
       // Send message to offscreen document to stop recording
-      const response = await chrome.runtime.sendMessage({
-        action: 'STOP_OFFSCREEN_RECORDING'
+      const response = await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Timeout waiting for stop recording response'));
+        }, 5000);
+        
+        chrome.runtime.sendMessage({
+          action: 'STOP_OFFSCREEN_RECORDING'
+        }, (response) => {
+          clearTimeout(timeout);
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve(response);
+          }
+        });
       });
 
-      if (response && response.data) {
-        recordingState.recordedData = response.data;
+      if (response && (response as any).data) {
+        recordingState.recordedData = (response as any).data;
       }
 
       recordingState.isRecording = false;
       updateBadge();
       
-      // Close offscreen document
-      try {
-        await chrome.offscreen.closeDocument();
-      } catch {
-        // Document might already be closed
-      }
+      console.log('Background recording stopped successfully');
+      
+      // Close offscreen document after a delay
+      setTimeout(async () => {
+        try {
+          await chrome.offscreen.closeDocument();
+        } catch {
+          // Document might already be closed
+        }
+      }, 1000);
+      
     } catch (error) {
       console.error('Error stopping recording:', error);
       recordingState.isRecording = false;
