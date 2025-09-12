@@ -1,0 +1,28 @@
+{
+  "name": "ai-voice-recorder",
+  "version": "1.0.0",
+  "description": "This Chrome extension allows users to record audio in the background. It features a popup page with media controls for recording, playing, and saving the recorded audio locally as MP3 or WAV files.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build && npm run copy-extension-files && npm run verify",
+    "copy-extension-files": "cp manifest.json dist/ && cp -r icons dist/",
+    "verify": "node scripts/verify-build.js",
+    "preview": "vite preview"
+  },
+  "keywords": ["chrome-extension", "audio-recorder", "react", "typescript"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chrome": "^0.1.9",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.2",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5"
+  },
+  "dependencies": {
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  }
+}
