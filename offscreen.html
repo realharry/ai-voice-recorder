@@ -46,14 +46,34 @@
       color: #0c5460;
       border: 1px solid #bee5eb;
     }
+    .technical-info {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #6c757d;
+    }
+    .technical-info h4 {
+      margin-top: 0;
+      color: #495057;
+    }
   </style>
 </head>
 <body>
   <div class="permission-notice">
-    <h2>🎙️ AI Voice Recorder</h2>
-    <p>This extension needs access to your microphone to record audio.</p>
-    <p>When prompted, please click <strong>"Allow"</strong> to grant microphone permission.</p>
-    <div id="status" class="status info">Ready to request microphone access...</div>
+    <h2>🎙️ AI Voice Recorder - Background Recording</h2>
+    <p>This offscreen document handles audio recording in the background.</p>
+    <p><strong>Note:</strong> Microphone permission should be requested from the popup first.</p>
+    <div id="status" class="status info">Ready for background recording...</div>
+    
+    <div class="technical-info">
+      <h4>Technical Information</h4>
+      <p><strong>Purpose:</strong> Chrome Extension V3 requires offscreen documents for getUserMedia() in service workers</p>
+      <p><strong>Permission Flow:</strong> Popup requests permission → Background coordinates → Offscreen handles recording</p>
+      <p><strong>User Activation:</strong> Initial permission must come from user gesture in popup context</p>
+    </div>
   </div>
   <script type="module" src="/src/offscreen.ts"></script>
 </body>

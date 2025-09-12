@@ -35,7 +35,8 @@ function App() {
           <div className="notice-content">
             <h3>🔒 Microphone Permission Required</h3>
             <p>This extension needs access to your microphone to record audio.</p>
-            <p><strong>When you click "Start Recording", Chrome will ask for permission. Please click "Allow" to continue.</strong></p>
+            <p><strong>When you click "Start Recording", Chrome will show a permission dialog. Please click "Allow" to continue.</strong></p>
+            <p><small>Note: The permission request happens directly in this popup to ensure proper user activation context.</small></p>
             <button 
               className="close-notice"
               onClick={() => setShowPermissionNotice(false)}

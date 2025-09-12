@@ -54,10 +54,27 @@ async function startOffscreenRecording() {
       throw new Error('getUserMedia is not supported in this browser');
     }
 
-    updateStatus('Requesting microphone access... Please click "Allow" when prompted.', 'info');
+    // Check current permission state first
+    try {
+      const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+      console.log('Microphone permission status:', permissionStatus.state);
+      
+      if (permissionStatus.state === 'denied') {
+        updateStatus('Microphone access denied', 'error');
+        throw new Error('Microphone access was permanently denied. Please enable microphone access in Chrome settings (chrome://settings/content/microphone) and reload this extension.');
+      }
+      
+      if (permissionStatus.state === 'granted') {
+        updateStatus('Microphone permission already granted, starting recording...', 'info');
+      } else {
+        updateStatus('Requesting microphone access...', 'info');
+      }
+    } catch (permError) {
+      console.log('Permission query not supported, proceeding with getUserMedia...', permError);
+      updateStatus('Requesting microphone access...', 'info');
+    }
     
-    // Get user media with proper error handling
-    // Note: This should trigger the permission prompt
+    // Get user media - this should work if permission was granted in popup
     const stream = await navigator.mediaDevices.getUserMedia({ 
       audio: {
         echoCancellation: true,
@@ -68,7 +85,7 @@ async function startOffscreenRecording() {
       } 
     });
 
-    updateStatus('Microphone access granted! Starting recording...', 'success');
+    updateStatus('Microphone access granted! Setting up recording...', 'success');
 
     offscreenChunks = [];
     
@@ -83,6 +100,8 @@ async function startOffscreenRecording() {
         }
       }
     }
+    
+    console.log('Using MIME type for recording:', mimeType || 'browser default');
     
     offscreenRecorder = new MediaRecorder(stream, {
       mimeType: mimeType || undefined
@@ -118,9 +137,15 @@ async function startOffscreenRecording() {
     
     // Provide more specific error messages
     if (error instanceof DOMException) {
+      console.error('DOMException details:', {
+        name: error.name,
+        message: error.message,
+        code: error.code
+      });
+      
       if (error.name === 'NotAllowedError') {
         updateStatus('Microphone access denied', 'error');
-        throw new Error('Microphone access was denied. Please reload the extension and click "Allow" when prompted for microphone access.');
+        throw new Error('Microphone access was denied. The popup should have requested permission first. Please reload the extension and try again.');
       } else if (error.name === 'NotFoundError') {
         updateStatus('No microphone found', 'error');
         throw new Error('No microphone found. Please ensure a microphone is connected to your device.');
