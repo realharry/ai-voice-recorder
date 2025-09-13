@@ -1,33 +1,11 @@
 // Utility functions for communicating with the background script
 
-// Request microphone permission in popup context (with user activation)
-export async function requestMicrophonePermission(): Promise<boolean> {
-  try {
-    // Test microphone access in popup context to establish permission
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
-        sampleRate: 44100,
-        channelCount: 1
-      } 
-    });
-    
-    // Stop the test stream immediately
-    stream.getTracks().forEach(track => track.stop());
-    
-    console.log('Microphone permission granted in popup context');
-    return true;
-  } catch (error) {
-    console.error('Microphone permission denied in popup context:', error);
-    return false;
-  }
-}
-
 export async function startRecording(): Promise<void> {
   return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage({ action: 'START_RECORDING' }, (response) => {
+    chrome.runtime.sendMessage({ 
+      action: 'START_RECORDING',
+      userActivation: true // Indicate this comes from user gesture
+    }, (response) => {
       if (chrome.runtime.lastError) {
         reject(new Error(chrome.runtime.lastError.message))
       } else if (response?.success) {

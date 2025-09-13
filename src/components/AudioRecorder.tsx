@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { startRecording, stopRecording, downloadRecording, requestMicrophonePermission } from '../utils/chromeMessages'
+import { startRecording, stopRecording, downloadRecording } from '../utils/chromeMessages'
 
 interface AudioRecorderProps {
   isRecording: boolean
@@ -16,17 +16,9 @@ function AudioRecorder({ isRecording, onRecordingChange, onPermissionNeeded }: A
     setError(null)
     
     try {
-      // First, request microphone permission in popup context
-      console.log('Requesting microphone permission in popup...')
-      const hasPermission = await requestMicrophonePermission()
+      console.log('Starting recording with user activation context...')
       
-      if (!hasPermission) {
-        throw new Error('Microphone permission was denied. Please click "Allow" when Chrome asks for microphone access.')
-      }
-      
-      console.log('Microphone permission granted, starting background recording...')
-      
-      // Now start the background recording with offscreen document
+      // Start recording directly - user activation context will be propagated to offscreen document
       await startRecording()
       onRecordingChange(true)
     } catch (error) {

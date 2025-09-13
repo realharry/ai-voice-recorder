@@ -26,7 +26,7 @@ function updateStatus(message: string, type: 'success' | 'error' | 'info' = 'inf
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   switch (message.action) {
     case 'START_OFFSCREEN_RECORDING':
-      startOffscreenRecording().then(() => {
+      startOffscreenRecording(message.userActivation).then(() => {
         sendResponse({ success: true });
       }).catch(error => {
         console.error('Error in offscreen recording:', error);
@@ -45,7 +45,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 });
 
-async function startOffscreenRecording() {
+async function startOffscreenRecording(userActivation: boolean = false) {
   try {
     updateStatus('Checking microphone availability...', 'info');
     
@@ -54,27 +54,17 @@ async function startOffscreenRecording() {
       throw new Error('getUserMedia is not supported in this browser');
     }
 
-    // Check current permission state first
-    try {
-      const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-      console.log('Microphone permission status:', permissionStatus.state);
-      
-      if (permissionStatus.state === 'denied') {
-        updateStatus('Microphone access denied', 'error');
-        throw new Error('Microphone access was permanently denied. Please enable microphone access in Chrome settings (chrome://settings/content/microphone) and reload this extension.');
-      }
-      
-      if (permissionStatus.state === 'granted') {
-        updateStatus('Microphone permission already granted, starting recording...', 'info');
-      } else {
-        updateStatus('Requesting microphone access...', 'info');
-      }
-    } catch (permError) {
-      console.log('Permission query not supported, proceeding with getUserMedia...', permError);
-      updateStatus('Requesting microphone access...', 'info');
+    // Log user activation status for debugging
+    if (userActivation) {
+      updateStatus('Starting with user activation context...', 'info');
+    } else {
+      updateStatus('Starting without explicit user activation...', 'info');
     }
     
-    // Get user media - this should work if permission was granted in popup
+    // Get user media directly - in Manifest V3, the offscreen document 
+    // should handle permissions without pre-checking
+    updateStatus('Requesting microphone access...', 'info');
+    
     const stream = await navigator.mediaDevices.getUserMedia({ 
       audio: {
         echoCancellation: true,
@@ -145,7 +135,7 @@ async function startOffscreenRecording() {
       
       if (error.name === 'NotAllowedError') {
         updateStatus('Microphone access denied', 'error');
-        throw new Error('Microphone access was denied. The popup should have requested permission first. Please reload the extension and try again.');
+        throw new Error('Microphone access was denied. Please click "Allow" when Chrome asks for microphone permission, or enable microphone access in Chrome settings if permanently blocked.');
       } else if (error.name === 'NotFoundError') {
         updateStatus('No microphone found', 'error');
         throw new Error('No microphone found. Please ensure a microphone is connected to your device.');

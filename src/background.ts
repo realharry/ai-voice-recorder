@@ -8,7 +8,7 @@ let recordingState = {
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   switch (message.action) {
     case 'START_RECORDING':
-      startBackgroundRecording().then(() => sendResponse({ success: true })).catch(error => {
+      startBackgroundRecording(message.userActivation).then(() => sendResponse({ success: true })).catch(error => {
         console.error('Error starting recording:', error);
         sendResponse({ success: false, error: error.message });
       });
@@ -32,7 +32,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 });
 
-async function startBackgroundRecording() {
+async function startBackgroundRecording(userActivation: boolean = false) {
   try {
     console.log('Starting background recording process...');
     
@@ -67,7 +67,8 @@ async function startBackgroundRecording() {
       }, 10000); // 10 second timeout
       
       chrome.runtime.sendMessage({
-        action: 'START_OFFSCREEN_RECORDING'
+        action: 'START_OFFSCREEN_RECORDING',
+        userActivation: userActivation // Pass through user activation
       }, (response) => {
         clearTimeout(timeout);
         if (chrome.runtime.lastError) {
